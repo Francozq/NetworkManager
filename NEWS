@@ -27,6 +27,7 @@ USE AT YOUR OWN RISK.  NOT RECOMMENDED FOR PRODUCTION USE!
   when IPv6 device address was not explicitly passed on by ModemManager
 * Fix a performance issue that was leading to 100% CPU usage by NetworkManager
   if external programs were doing a big amount of routes updates.
+* Add support for configuring veth interfaces to nmtui.
 
 =============================================
 NetworkManager-1.46
