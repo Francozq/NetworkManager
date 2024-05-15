@@ -1379,6 +1379,10 @@
         <property name="dhcp-reject-servers"
                   nmcli-description="Array of servers from which DHCP offers must be rejected. This property is useful to avoid getting a lease from misconfigured or rogue servers. For DHCPv4, each element must be an IPv4 address, optionally followed by a slash and a prefix length (e.g. &quot;192.168.122.0/24&quot;). This property is currently not implemented for DHCPv6."
                   format="list of IPv4 addresses" />
+        <property name="dhcp-use-routes"
+                  nmcli-description="Whether the DHCPv4 client will request and use the static routes provided by the server via option 121 (Classless Static Route), option 33 (Static Route) and 249 (Microsoft Classless Static Route). If set to value &apos;default&apos;, the global default from configuration is used. If the global default is unset, routes from DHCPv4 are configured. At the moment this property is only used for DHCPv4, and DHCPv6 doesn&apos;t provide a mechanism to pass routes to clients."
+                  format="ternary"
+                  values="true/yes/on, false/no/off, default/unknown" />
         <property name="auto-route-ext-gw"
                   nmcli-description="VPN connections will default to add the route automatically unless this setting is set to FALSE. For other connection types, adding such an automatic route is currently not supported and setting this to TRUE has no effect."
                   format="ternary"

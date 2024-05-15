@@ -1622,6 +1622,10 @@
                   dbus-type="i"
                   gprop-type="gint"
                   />
+        <property name="dhcp-use-routes"
+                  dbus-type="i"
+                  gprop-type="NMTernary"
+                  />
         <property name="dhcp-vendor-class-identifier"
                   dbus-type="s"
                   gprop-type="gchararray"
@@ -1764,6 +1768,10 @@
         <property name="dhcp-timeout"
                   dbus-type="i"
                   gprop-type="gint"
+                  />
+        <property name="dhcp-use-routes"
+                  dbus-type="i"
+                  gprop-type="NMTernary"
                   />
         <property name="dns"
                   dbus-type="aay"

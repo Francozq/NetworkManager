@@ -4003,6 +4003,7 @@ NM_GOBJECT_PROPERTIES_DEFINE(NMSettingIPConfig,
                              PROP_REQUIRED_TIMEOUT,
                              PROP_DHCP_IAID,
                              PROP_DHCP_REJECT_SERVERS,
+                             PROP_DHCP_USE_ROUTES,
                              PROP_AUTO_ROUTE_EXT_GW,
                              PROP_REPLACE_LOCAL_RULE,
                              PROP_DHCP_SEND_RELEASE, );
@@ -5433,6 +5434,22 @@ nm_setting_ip_config_clear_dhcp_reject_servers(NMSettingIPConfig *setting)
 }
 
 /**
+ * nm_setting_ip_config_get_dhcp_use_routes:
+ * @setting: the #NMSettingIPConfig
+ *
+ * Returns: the #NMSettingIPConfig:dhcp-use-routes property of the setting
+ *
+ * Since: 1.50
+ **/
+NMTernary
+nm_setting_ip_config_get_dhcp_use_routes(NMSettingIPConfig *setting)
+{
+    g_return_val_if_fail(NM_IS_SETTING_IP_CONFIG(setting), NM_TERNARY_DEFAULT);
+
+    return NM_SETTING_IP_CONFIG_GET_PRIVATE(setting)->dhcp_use_routes;
+}
+
+/**
  * nm_setting_ip_config_get_auto_route_ext_gw:
  * @setting: the #NMSettingIPConfig
  *
@@ -6198,6 +6215,14 @@ _nm_sett_info_property_override_create_array_ip_config(int addr_family)
                                                                   NMSettingIPConfigPrivate,
                                                                   dhcp_reject_servers));
 
+    _nm_properties_override_gobj(
+        properties_override,
+        obj_properties[PROP_DHCP_USE_ROUTES],
+        &nm_sett_info_propert_type_direct_enum,
+        .direct_offset =
+            NM_STRUCT_OFFSET_ENSURE_TYPE(int, NMSettingIPConfigPrivate, dhcp_use_routes),
+        .direct_data.enum_gtype = NM_TYPE_TERNARY);
+
     return properties_override;
 }
 
@@ -6892,6 +6917,29 @@ nm_setting_ip_config_class_init(NMSettingIPConfigClass *klass)
                            "",
                            G_TYPE_STRV,
                            G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
+
+    /**
+     * NMSettingIPConfig:dhcp-use-routes:
+     *
+     * Whether the DHCPv4 client will request and use the static routes
+     * provided by the server via option 121 (Classless Static Route),
+     * option 33 (Static Route) and 249 (Microsoft Classless Static Route).
+     *
+     * If set to value 'default', the global default from configuration is used.
+     * If the global default is unset, routes from DHCPv4 are configured.
+     *
+     * At the moment this property is only used for DHCPv4, and DHCPv6 doesn't
+     * provide a mechanism to pass routes to clients.
+     *
+     * Since: 1.50
+     */
+    obj_properties[PROP_DHCP_USE_ROUTES] =
+        g_param_spec_enum(NM_SETTING_IP_CONFIG_DHCP_USE_ROUTES,
+                          "",
+                          "",
+                          NM_TYPE_TERNARY,
+                          NM_TERNARY_DEFAULT,
+                          G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY | G_PARAM_STATIC_STRINGS);
 
     /**
      * NMSettingIPConfig:auto-route-ext-gw:
