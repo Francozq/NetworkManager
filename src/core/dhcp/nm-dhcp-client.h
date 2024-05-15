@@ -149,6 +149,9 @@ typedef struct {
      * For DHCPv6 this is always TRUE. */
     bool use_fqdn : 1;
 
+    /* Whether to use static routes from options 121, 33 and 249. */
+    bool use_routes : 1;
+
     union {
         struct {
             /* The address from the previous lease */

@@ -390,7 +390,8 @@ NML3ConfigData *
 nm_dhcp_utils_ip4_config_from_options(NMDedupMultiIndex *multi_idx,
                                       int                ifindex,
                                       const char        *iface,
-                                      GHashTable        *options)
+                                      GHashTable        *options,
+                                      gboolean           use_routes)
 {
     nm_auto_unref_l3cd_init NML3ConfigData *l3cd = NULL;
     guint32                                 tmp_addr;
@@ -433,11 +434,13 @@ nm_dhcp_utils_ip4_config_from_options(NMDedupMultiIndex *multi_idx,
 
     nm_platform_ip4_address_set_addr(&address, addr, plen);
 
-    /* Routes: if the server returns classless static routes, we MUST ignore
-     * the 'static_routes' option.
-     */
-    if (!ip4_process_classless_routes(iface, options, l3cd, address.address, &gateway))
-        process_classful_routes(iface, options, l3cd, address.address);
+    if (use_routes) {
+        /* Routes: if the server returns classless static routes, we MUST ignore
+         * the 'static_routes' option.
+         */
+        if (!ip4_process_classless_routes(iface, options, l3cd, address.address, &gateway))
+            process_classful_routes(iface, options, l3cd, address.address);
+    }
 
     if (gateway) {
         _LOG2I(LOGD_DHCP4, iface, "  gateway %s", nm_inet4_ntop(gateway, sbuf));

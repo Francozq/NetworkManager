@@ -389,7 +389,8 @@ lease_parse_routes(NDhcp4ClientLease *lease,
                    NML3ConfigData    *l3cd,
                    in_addr_t          lease_address,
                    GHashTable        *options,
-                   NMStrBuf          *sbuf)
+                   NMStrBuf          *sbuf,
+                   gboolean           all_options)
 {
     char          dest_str[NM_INET_ADDRSTRLEN];
     char          gateway_str[NM_INET_ADDRSTRLEN];
@@ -404,6 +405,9 @@ lease_parse_routes(NDhcp4ClientLease *lease,
     gsize         l_data_len;
     int           r;
     guint         i;
+
+    if (!all_options)
+        goto handle_routers;
 
     /* Routes can be in option 33 (static-route), 121 (classless-static-route) and 249 (a non-standard classless-static-route).
      * Option 249 (Microsoft Classless Static Route), is described here:
@@ -504,6 +508,8 @@ lease_parse_routes(NDhcp4ClientLease *lease,
 
         _add_option(options, NM_DHCP_OPTION_DHCP4_STATIC_ROUTE, nm_str_buf_get_str(sbuf));
     }
+
+handle_routers:
 
     r = _client_lease_query(lease, NM_DHCP_OPTION_DHCP4_ROUTER, &l_data, &l_data_len);
     if (r == 0) {
@@ -614,6 +620,7 @@ static NML3ConfigData *
 lease_to_ip4_config(NMDhcpNettools *self, NDhcp4ClientLease *lease, GError **error)
 {
     const char                             *iface;
+    const NMDhcpClientConfig               *config;
     nm_auto_str_buf NMStrBuf                sbuf    = NM_STR_BUF_INIT(0, FALSE);
     nm_auto_unref_l3cd_init NML3ConfigData *l3cd    = NULL;
     gs_unref_hashtable GHashTable          *options = NULL;
@@ -660,7 +667,8 @@ lease_to_ip4_config(NMDhcpNettools *self, NDhcp4ClientLease *lease, GError **err
                                           v_inaddr);
     }
 
-    lease_parse_routes(lease, l3cd, lease_address, options, &sbuf);
+    config = nm_dhcp_client_get_config(NM_DHCP_CLIENT(self));
+    lease_parse_routes(lease, l3cd, lease_address, options, &sbuf, config->use_routes);
 
     lease_parse_address_list(lease,
                              l3cd,
@@ -1372,6 +1380,14 @@ ip4_start(NMDhcpClient *client, GError **error)
     for (i = 0; i < (int) G_N_ELEMENTS(_nm_dhcp_option_dhcp4_options); i++) {
         if (_nm_dhcp_option_dhcp4_options[i].include) {
             nm_assert(_nm_dhcp_option_dhcp4_options[i].option_num <= 255);
+
+            if (!client_config->use_routes
+                && NM_IN_SET(_nm_dhcp_option_dhcp4_options[i].option_num,
+                             NM_DHCP_OPTION_DHCP4_CLASSLESS_STATIC_ROUTE,
+                             NM_DHCP_OPTION_DHCP4_PRIVATE_CLASSLESS_STATIC_ROUTE,
+                             NM_DHCP_OPTION_DHCP4_STATIC_ROUTE))
+                continue;
+
             n_dhcp4_client_probe_config_request_option(config,
                                                        _nm_dhcp_option_dhcp4_options[i].option_num);
         }

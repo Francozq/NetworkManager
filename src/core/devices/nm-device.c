@@ -1591,6 +1591,29 @@ _prop_get_connection_lldp(NMDevice *self)
     return lldp == NM_SETTING_CONNECTION_LLDP_ENABLE_RX;
 }
 
+static gboolean
+_prop_get_ipv4_dhcp_use_routes(NMDevice *self)
+{
+    NMConnection *connection;
+    NMTernary     val;
+
+    nm_assert(NM_IS_DEVICE(self));
+
+    connection = nm_device_get_applied_connection(self);
+
+    val = nm_setting_ip_config_get_dhcp_use_routes(
+        nm_connection_get_setting_ip_config(connection, AF_INET));
+    if (val != NM_TERNARY_DEFAULT)
+        return val;
+
+    return nm_config_data_get_connection_default_int64(NM_CONFIG_GET_DATA,
+                                                       NM_CON_DEFAULT("ipv4.dhcp-use-routes"),
+                                                       self,
+                                                       FALSE,
+                                                       TRUE,
+                                                       TRUE);
+}
+
 static NMSettingIP4LinkLocal
 _prop_get_ipv4_link_local(NMDevice *self)
 {
@@ -11228,6 +11251,7 @@ _dev_ipdhcpx_start(NMDevice *self, int addr_family)
             .vendor_class_identifier = vendor_class_identifier,
             .use_fqdn                = hostname_is_fqdn,
             .reject_servers          = reject_servers,
+            .use_routes              = _prop_get_ipv4_dhcp_use_routes(self),
             .v4 =
                 {
                     .request_broadcast = request_broadcast,
@@ -11264,6 +11288,7 @@ _dev_ipdhcpx_start(NMDevice *self, int addr_family)
             .mud_url         = _prop_get_connection_mud_url(self, s_con),
             .timeout         = no_lease_timeout_sec,
             .anycast_address = _device_get_dhcp_anycast_address(self),
+            .use_routes      = TRUE,
             .v6 =
                 {
                     .enforce_duid  = enforce_duid,

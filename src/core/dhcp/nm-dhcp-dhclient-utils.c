@@ -301,6 +301,7 @@ nm_dhcp_dhclient_create_config(const char         *interface,
                                const char         *hostname,
                                guint32             timeout,
                                gboolean            use_fqdn,
+                               gboolean            use_routes,
                                NMDhcpHostnameFlags hostname_flags,
                                const char         *mud_url,
                                const char *const  *reject_servers,
@@ -484,9 +485,11 @@ nm_dhcp_dhclient_create_config(const char         *interface,
         nm_auto_unref_bytes GBytes *client_id_none = NULL;
         client_id = send_client_id ? client_id : (client_id_none = g_bytes_new_static("", 0));
         add_ip4_config(new_contents, client_id, hostname, use_fqdn, hostname_flags);
-        add_request(reqs, "rfc3442-classless-static-routes");
-        add_request(reqs, "ms-classless-static-routes");
-        add_request(reqs, "static-routes");
+        if (use_routes) {
+            add_request(reqs, "rfc3442-classless-static-routes");
+            add_request(reqs, "ms-classless-static-routes");
+            add_request(reqs, "static-routes");
+        }
         add_request(reqs, "wpad");
         add_request(reqs, "ntp-servers");
         add_request(reqs, "root-path");

@@ -1730,7 +1730,8 @@ nm_dhcp_client_handle_event(gpointer               unused,
                     nm_l3cfg_get_multi_idx(priv->config.l3cfg),
                     nm_l3cfg_get_ifindex(priv->config.l3cfg),
                     priv->config.iface,
-                    str_options);
+                    str_options,
+                    priv->config.use_routes);
             } else {
                 prefix = nm_dhcp_utils_ip6_prefix_from_options(str_options);
                 l3cd   = nm_dhcp_utils_ip6_config_from_options(

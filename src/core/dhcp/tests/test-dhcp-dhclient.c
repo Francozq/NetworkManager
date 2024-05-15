@@ -29,6 +29,7 @@ test_config(const char         *orig,
             const char         *hostname,
             guint32             timeout,
             gboolean            use_fqdn,
+            gboolean            use_routes,
             NMDhcpHostnameFlags hostname_flags,
             const char         *dhcp_client_id,
             GBytes             *expected_new_client_id,
@@ -56,6 +57,7 @@ test_config(const char         *orig,
                                          hostname,
                                          timeout,
                                          use_fqdn,
+                                         use_routes,
                                          hostname_flags,
                                          mud_url,
                                          NULL,
@@ -111,6 +113,7 @@ test_orig_missing(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -121,6 +124,39 @@ test_orig_missing(void)
 
 /*****************************************************************************/
 
+static const char *orig_missing_no_routes_expected =
+    "# Created by NetworkManager\n"
+    "\n"
+    "option mudurl code 161 = text;\n"
+    "send mudurl \"https://example.com/mud.json\";\n\n"
+    "option rfc3442-classless-static-routes code 121 = array of unsigned integer 8;\n"
+    "option ms-classless-static-routes code 249 = array of unsigned integer 8;\n"
+    "option wpad code 252 = string;\n"
+    "\n"
+    "also request wpad;\n"
+    "also request ntp-servers;\n"
+    "also request root-path;\n"
+    "\n";
+
+static void
+test_orig_missing_no_routes(void)
+{
+    test_config(NULL,
+                orig_missing_no_routes_expected,
+                AF_INET,
+                NULL,
+                0,
+                FALSE,
+                FALSE,
+                NM_DHCP_HOSTNAME_FLAG_NONE,
+                NULL,
+                NULL,
+                "eth0",
+                NULL,
+                TEST_MUDURL);
+}
+
+/*****************************************************************************/
 static const char *orig_missing_add_mud_url_expected =
     "# Created by NetworkManager\n"
     "\n"
@@ -147,6 +183,7 @@ test_orig_missing_add_mud_url(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -186,6 +223,7 @@ test_override_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 "11:22:33:44:55:66",
                 NULL,
@@ -222,6 +260,7 @@ test_quote_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 "abcd",
                 NULL,
@@ -258,6 +297,7 @@ test_quote_client_id_2(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 "a\\bc",
                 NULL,
@@ -294,6 +334,7 @@ test_hex_zero_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 "00:11:22:33",
                 NULL,
@@ -330,6 +371,7 @@ test_ascii_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 "qb:cd:ef:12:34:56",
                 NULL,
@@ -366,6 +408,7 @@ test_hex_single_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 "ab:cd:e:12:34:56",
                 NULL,
@@ -409,6 +452,7 @@ test_existing_hex_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 new_client_id,
@@ -452,6 +496,7 @@ test_existing_escaped_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 new_client_id,
@@ -499,6 +544,7 @@ test_existing_ascii_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 new_client_id,
@@ -541,6 +587,7 @@ test_none_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 connection_client_id,
                 expected_client_id,
@@ -582,6 +629,7 @@ test_missing_client_id(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 connection_client_id,
                 expected_client_id,
@@ -619,6 +667,7 @@ test_fqdn(void)
                 AF_INET,
                 "foo.bar.com",
                 0,
+                TRUE,
                 TRUE,
                 NM_DHCP_HOSTNAME_FLAG_FQDN_ENCODED | NM_DHCP_HOSTNAME_FLAG_FQDN_NO_UPDATE,
                 NULL,
@@ -668,6 +717,7 @@ test_fqdn_options_override(void)
                 0,
                 NM_DHCP_HOSTNAME_FLAG_FQDN_SERV_UPDATE,
                 TRUE,
+                TRUE,
                 NULL,
                 NULL,
                 "eth0",
@@ -706,6 +756,7 @@ test_override_hostname(void)
                 "blahblah",
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -739,6 +790,7 @@ test_override_hostname6(void)
                 "blahblah.local",
                 0,
                 TRUE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_FQDN_SERV_UPDATE,
                 NULL,
                 NULL,
@@ -769,6 +821,7 @@ test_nonfqdn_hostname6(void)
                 AF_INET6,
                 "blahblah",
                 0,
+                TRUE,
                 TRUE,
                 NM_DHCP_HOSTNAME_FLAG_FQDN_NO_UPDATE,
                 NULL,
@@ -810,6 +863,7 @@ test_existing_alsoreq(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -853,6 +907,7 @@ test_existing_req(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -898,6 +953,7 @@ test_existing_multiline_alsoreq(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -1196,6 +1252,7 @@ test_interface1(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -1247,6 +1304,7 @@ test_interface2(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -1364,6 +1422,7 @@ test_structured(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 new_client_id,
@@ -1424,6 +1483,7 @@ test_config_req_intf(void)
                 NULL,
                 0,
                 FALSE,
+                TRUE,
                 NM_DHCP_HOSTNAME_FLAG_NONE,
                 NULL,
                 NULL,
@@ -1443,6 +1503,7 @@ main(int argc, char **argv)
 
     g_test_add_func("/dhcp/dhclient/orig_missing", test_orig_missing);
     g_test_add_func("/dhcp/dhclient/orig_missing_add_mud_url", test_orig_missing_add_mud_url);
+    g_test_add_func("/dhcp/dhclient/orig_missing_no_routes", test_orig_missing_no_routes);
     g_test_add_func("/dhcp/dhclient/override_client_id", test_override_client_id);
     g_test_add_func("/dhcp/dhclient/quote_client_id/1", test_quote_client_id);
     g_test_add_func("/dhcp/dhclient/quote_client_id/2", test_quote_client_id_2);

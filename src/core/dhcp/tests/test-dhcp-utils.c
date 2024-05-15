@@ -21,17 +21,26 @@
 /*****************************************************************************/
 
 static const NML3ConfigData *
-_ip4_config_from_options(int ifindex, const char *iface, GHashTable *options)
+_ip4_config_from_options_full(int         ifindex,
+                              const char *iface,
+                              GHashTable *options,
+                              gboolean    use_routes)
 {
     nm_auto_unref_dedup_multi_index NMDedupMultiIndex *multi_idx = nm_dedup_multi_index_new();
     NML3ConfigData                                    *l3cd;
 
-    l3cd = nm_dhcp_utils_ip4_config_from_options(multi_idx, ifindex, iface, options);
+    l3cd = nm_dhcp_utils_ip4_config_from_options(multi_idx, ifindex, iface, options, use_routes);
     g_assert(NM_IS_L3_CONFIG_DATA(l3cd));
     g_assert(!nm_l3_config_data_is_sealed(l3cd));
     if (nmtst_get_rand_bool())
         nm_l3_config_data_seal(l3cd);
     return l3cd;
+}
+
+static const NML3ConfigData *
+_ip4_config_from_options(int ifindex, const char *iface, GHashTable *options)
+{
+    return _ip4_config_from_options_full(ifindex, iface, options, TRUE);
 }
 
 typedef struct {
@@ -565,6 +574,29 @@ test_dhcpcd_gw_in_classless_routes(void)
 }
 
 static void
+test_no_routes(void)
+{
+    gs_unref_hashtable GHashTable           *options = NULL;
+    nm_auto_unref_l3cd const NML3ConfigData *l3cd    = NULL;
+    static const Option                      data[]  = {
+        {"rfc3442_classless_static_routes", "24 192 168 10 192 168 1 254 8 10 10 17 66 41"},
+        {NULL, NULL}};
+
+    options = fill_table(generic_options, NULL);
+    options = fill_table(data, options);
+    l3cd    = _ip4_config_from_options_full(1, "eth0", options, TRUE);
+
+    g_assert_cmpint(nm_l3_config_data_get_num_routes(l3cd, AF_INET), ==, 3);
+    ip4_test_route(l3cd, 0, "192.168.10.0", "192.168.1.254", 24);
+    ip4_test_route(l3cd, 1, "10.0.0.0", "10.17.66.41", 8);
+    ip4_test_route(l3cd, 2, "0.0.0.0", "192.168.1.1", 0);
+    nm_l3_config_data_unref(l3cd);
+
+    l3cd = _ip4_config_from_options_full(1, "eth0", options, FALSE);
+    ip4_test_route(l3cd, 0, "0.0.0.0", "192.168.1.1", 0);
+}
+
+static void
 test_escaped_domain_searches(void)
 {
     gs_unref_hashtable GHashTable           *options          = NULL;
@@ -774,6 +806,7 @@ main(int argc, char **argv)
                     test_dhcpcd_invalid_classless_routes_3);
     g_test_add_func("/dhcp/dhclient-gw-in-classless-routes", test_dhclient_gw_in_classless_routes);
     g_test_add_func("/dhcp/dhcpcd-gw-in-classless-routes", test_dhcpcd_gw_in_classless_routes);
+    g_test_add_func("/dhcp/no-routes", test_no_routes);
     g_test_add_func("/dhcp/escaped-domain-searches", test_escaped_domain_searches);
     g_test_add_func("/dhcp/invalid-escaped-domain-searches", test_invalid_escaped_domain_searches);
     g_test_add_func("/dhcp/ip4-missing-prefix-24", test_ip4_missing_prefix_24);

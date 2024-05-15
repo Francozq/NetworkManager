@@ -241,6 +241,7 @@ create_dhclient_config(NMDhcpDhclient     *self,
                        NMDhcpHostnameFlags hostname_flags,
                        const char         *mud_url,
                        const char *const  *reject_servers,
+                       gboolean            use_routes,
                        GBytes            **out_new_client_id)
 {
     gs_free char *orig_path    = NULL;
@@ -277,6 +278,7 @@ create_dhclient_config(NMDhcpDhclient     *self,
                                                  hostname,
                                                  timeout,
                                                  use_fqdn,
+                                                 use_routes,
                                                  hostname_flags,
                                                  mud_url,
                                                  reject_servers,
@@ -530,6 +532,7 @@ ip4_start(NMDhcpClient *client, GError **error)
                                              client_config->hostname_flags,
                                              client_config->mud_url,
                                              client_config->reject_servers,
+                                             client_config->use_routes,
                                              &new_client_id);
     if (!priv->conf_file) {
         nm_utils_error_set_literal(error,
@@ -573,6 +576,7 @@ ip6_start(NMDhcpClient *client, const struct in6_addr *ll_addr, GError **error)
                                              config->hostname_flags,
                                              config->mud_url,
                                              NULL,
+                                             config->use_routes,
                                              NULL);
     if (!priv->conf_file) {
         nm_utils_error_set_literal(error,
