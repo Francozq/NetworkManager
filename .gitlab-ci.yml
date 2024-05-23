@@ -59,11 +59,11 @@ variables:
   #
   # This is done by running `ci-fairy generate-template` and possibly bumping
   # ".default_tag".
-  ALPINE_TAG:  'tag-75ecbb5bcef4'
-  CENTOS_TAG:  'tag-ea45f0a3f632'
-  DEBIAN_TAG:  'tag-1ccef04c657b'
-  FEDORA_TAG:  'tag-ea45f0a3f632'
-  UBUNTU_TAG:  'tag-1ccef04c657b'
+  ALPINE_TAG:  'tag-d6067bc5f6b6'
+  CENTOS_TAG:  'tag-3e895d2f7f3f'
+  DEBIAN_TAG:  'tag-5397fc71fabd'
+  FEDORA_TAG:  'tag-3e895d2f7f3f'
+  UBUNTU_TAG:  'tag-5397fc71fabd'
 
   ALPINE_EXEC: 'bash .gitlab-ci/alpine-install.sh'
   CENTOS_EXEC: 'bash .gitlab-ci/fedora-install.sh'
@@ -654,14 +654,14 @@ pages:
   needs:
     - "t_fedora:40: [autotools+gcc+docs+valgrind]"
 
-# triage:issues:
-#   stage: triage
-#   image: ruby:2.7
-#   script:
-#     - gem install gitlab-triage
-#     - gitlab-triage -d --token $API_TOKEN --source-id $SOURCE_ID
-#   only:
-#     - schedules
+triage:issues:
+  stage: triage
+  image: ruby:3
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULED_PIPELINE_NAME == "daily"
+  script:
+    - gem install gitlab-triage
+    - gitlab-triage --debug --token $API_TOKEN --source-id $CI_PROJECT_ID
 
 # Clean the generated images periodically to get updated snapshots of the distribution images.
 # Create an scheduled pipeline to run it, passing an AUTHFILE environment variable of type
@@ -671,7 +671,7 @@ clean-images:
     - .fdo.ci-fairy
   stage: prep
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULED_PIPELINE_NAME == "weekly"
   script:
     - ci-fairy -v --authfile $AUTHFILE delete-image --project NetworkManager/NetworkManager --all
 
