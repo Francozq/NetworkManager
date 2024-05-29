@@ -136,9 +136,9 @@
 %endif
 
 %if %{with bluetooth} || %{with wwan}
-%global with_modem_manager_1 1
+%bcond_without modem_manager
 %else
-%global with_modem_manager_1 0
+%bcond_with modem_manager
 %endif
 
 %if 0%{?fedora} >= 31 || 0%{?rhel} >= 8
@@ -306,7 +306,7 @@ BuildRequires: libpsl-devel >= 0.1
 %endif
 BuildRequires: libcurl-devel
 BuildRequires: libndp-devel >= 1.0
-%if 0%{?with_modem_manager_1}
+%if %{with modem_manager}
 BuildRequires: ModemManager-glib-devel >= 1.0
 %endif
 %if %{with wwan}
@@ -663,7 +663,7 @@ Preferably use nmcli instead.
 	-D b_lto=false \
 %endif
 	-Dlibaudit=yes-disabled-by-default \
-%if 0%{?with_modem_manager_1}
+%if %{with modem_manager}
 	-Dmodem_manager=true \
 %else
 	-Dmodem_manager=false \
@@ -816,7 +816,7 @@ autoreconf --install --force
 	--enable-lto=no \
 %endif
 	--with-libaudit=yes-disabled-by-default \
-%if 0%{?with_modem_manager_1}
+%if %{with modem_manager}
 	--with-modem-manager-1=yes \
 %else
 	--with-modem-manager-1=no \
